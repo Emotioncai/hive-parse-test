@@ -14,7 +14,7 @@ import java.util.List;
 
 public class MyHiveSqlParser extends SqlParserAbstract {
     private ParseTree getParseTree(String sql) {
-        CharStream input = CharStreams.fromString(sql);
+        CharStream input = CharStreams.fromString(sql.toUpperCase());
         HiveSqlLexer lexer = new HiveSqlLexer(input);
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         HiveSqlParser parser = new HiveSqlParser(tokenStream);

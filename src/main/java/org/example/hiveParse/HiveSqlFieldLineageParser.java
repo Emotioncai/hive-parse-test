@@ -13,15 +13,10 @@ import java.util.stream.Collectors;
 
 public class HiveSqlFieldLineageParser extends HiveSqlBaseVisitor {
     private TableNameModel outputTable;
-
     private final HashMap<String, FieldLineageSelectModel> hiveFieldSelects = new LinkedHashMap<>();
-
     private final Map<Integer, String> selectParentKeyMap = new HashMap<>();
-
     private String thisSelectId;
-
     private final String sourceSQL;
-
     /**
      * for select Item
      */
@@ -72,7 +67,8 @@ public class HiveSqlFieldLineageParser extends HiveSqlBaseVisitor {
     }
 
     /**
-     * selectItem 获取别名名，初始化selectItem存相关字段的fieldNames
+     * selectItem 获取别名，初始化selectItem存相关字段的fieldNames
+     * visitSelect_list_item
      */
     @Override
     public Object visitSelect_list_item(HiveSqlParser.Select_list_itemContext ctx) {

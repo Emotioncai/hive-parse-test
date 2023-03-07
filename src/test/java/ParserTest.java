@@ -8,7 +8,7 @@ import java.util.List;
 public class ParserTest {
     @Test
     public void tableLineage(){
-        String sql ="insert into ads.ads_material_in_library_cost_detail \n" +
+        String sql ="INSERT into dwd.dwd_base_info\n" +
                 "select \n" +
                 "e.*,\n" +
                 "settlement_cost*tons_amount settlement_amount --结算金额\n" +
@@ -52,12 +52,12 @@ public class ParserTest {
                 "\t\t\tdwd.dwd_batch_inventory_ingredient\n" +
                 " \t\twhere\n" +
                 " \t\t  amount >'0' and (product_classify_code in ('1101','2101','3101') or product_classify_code like '12%')\n" +
-                " \t\t  --and current_dt>=to_date('${check_point}','YYYY-MM-dd') and current_dt <to_date('${end_dt}','YYYY-MM-dd') --过滤原料、辅料\n" +
+                " \t\t  and current_dt>=to_date('${check_point}','YYYY-MM-dd') and current_dt <to_date('${end_dt}','YYYY-MM-dd') --过滤原料、辅料\n" +
                 "\t\tgroup by current_times,current_dt,sales_grade_code,stronghold,company,locations,location_docs,product_classify_code,product_classify,subclass,material_no,product_category_name,\n" +
                 "\t\t\tspecification,vendor,batch,tons_amount,amount,unit) as b\n" +
                 "\tleft join dwd.dwd_purchase_storage_batch_price p on b.stronghold = p.stronghold and b.material_no = p.material_no and b.batch = p.batch) as c\n" +
                 "\tleft join dwd.dwd_auxiliary_material_batch_cost m on c.material_no = m.material_no  and c.batch = m.batch_no ) as d\n" +
-                "\tleft join dwd.dwd_material_monthly_form_detail n on d.material_no=n.material_no and d.stronghold=n.site  ) as f ) as e ;\n";
+                "\tleft join dwd.dwd_material_monthly_form_detail n on d.material_no=n.material_no and d.stronghold=n.site  ) as f ) as e ";
         MyHiveSqlParser myHiveSqlParser = new MyHiveSqlParser();
         List<FieldLineageModel> fieldLineageModels = myHiveSqlParser.parseSqlFieldLineage(sql);
         System.out.println(fieldLineageModels.toString());
