@@ -7,7 +7,10 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.example.antlr.HiveSqlLexer;
 import org.example.antlr.HiveSqlParser;
 import org.example.common.SqlParserAbstract;
+import org.example.model.FieldLineageModel;
 import org.example.model.TableLineageModel;
+
+import java.util.List;
 
 public class MyHiveSqlParser extends SqlParserAbstract {
     private ParseTree getParseTree(String sql) {
@@ -46,11 +49,10 @@ public class MyHiveSqlParser extends SqlParserAbstract {
         return visitor.getTableLineage();
     }
 
-//    @Override
-//    public List<FieldLineageModel> parseSqlFieldLineage(String sql) {
-//        HiveSqlFieldLineageParser visitor = new HiveSqlFieldLineageParser(sql);
-//        visitor.visit(getParseTree(sql));
-//        return visitor.getHiveFieldLineage();
-//    }
+    public List<FieldLineageModel> parseSqlFieldLineage(String sql) {
+        HiveSqlFieldLineageParser visitor = new HiveSqlFieldLineageParser(sql);
+        visitor.visit(getParseTree(sql));
+        return visitor.getHiveFieldLineage();
+    }
 
 }

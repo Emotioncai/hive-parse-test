@@ -1,53 +1,65 @@
 import org.example.hiveParse.MyHiveSqlParser;
+import org.example.model.FieldLineageModel;
 import org.example.model.TableLineageModel;
 import org.junit.Test;
+
+import java.util.List;
 
 public class ParserTest {
     @Test
     public void tableLineage(){
-        String sql ="SELECT\n" +
-                "  ari.area_code, --区域编码\n" +
-                "  ari.area_name, --区域名称\n" +
-                "  ai.base_code, --基地编码\n" +
-                "  ai.base_name, --基地名称\n" +
-                "  ai.line_code, --线体编码\n" +
-                "  ai.line_name, --线体名称\n" +
-                "  '100' AS ratio_code, --制膜工时等编码\n" +
-                "  '制膜工时' ratio_name, --制膜工时等名称\n" +
-                "  ft.ID AS film_code, --膜种类型编码\n" +
-                "  ft.film_name AS film_name, --膜种类型名称\n" +
-                "  ftk.ID AS thick_code, --膜种厚度类型编码\n" +
-                "  ftk.thickness_name AS thick_name, --膜种厚度类型名称\n" +
-                "  ( SUM ( pd.actual_production_quantity ) / SUM ( pd.product_time ) ) AS fees_collection -- 制膜工时值 = 实际生产重量/生产时间\n" +
-                " FROM\n" +
-                "  dwd.dwd_equipment_performance_detail pd\n" +
-                " LEFT JOIN ads.ads_arealine_info ai ON ai.line_code = pd.lines\n" +
-                " LEFT JOIN ads.ads_areasite_info asi ON ai.area_code = asi.comp_code\n" +
-                " LEFT JOIN ads.ads_area_info ari ON asi.area_code = ari.area_code\n" +
-                "  LEFT JOIN ads.ads_film_detail fd ON fd.middle_section = split_part(pd.material_no, '-', 2)\n" +
-                "  LEFT JOIN ads.ads_film_type ft ON fd.film_type_id = ft.ID \n" +
-                " LEFT JOIN ads.ads_film_thickness ftk ON fd.film_thickness_id = ftk.ID \n" +
-                " WHERE\n" +
-                "  pd.report_date >= '2022-12-01' --开始时间变量\n" +
-                "  AND pd.report_date <= '2022-12-31' --结束时间变量\n" +
-                "  AND asi.is_deleted = '0' AND ari.is_deleted = '0' \n" +
-                "  AND ft.deleted = '0'\n" +
-                "  AND ftk.deleted = '0'\n" +
-                " GROUP BY\n" +
-                "  ari.area_code,\n" +
-                "  ari.area_name,\n" +
-                "  ai.base_code,\n" +
-                "  ai.base_name,\n" +
-                "  ai.line_code,\n" +
-                "  ai.line_name,\n" +
-                "  ratio_code,\n" +
-                "  ratio_name,\n" +
-                "  ft.ID,\n" +
-                "  ft.film_name,\n" +
-                "  ftk.ID,\n" +
-                "  ftk.thickness_name";
+        String sql ="insert into ads.ads_material_in_library_cost_detail \n" +
+                "select \n" +
+                "e.*,\n" +
+                "settlement_cost*tons_amount settlement_amount --结算金额\n" +
+                "from (\n" +
+                "select \n" +
+                "f.*,\n" +
+                "case \n" +
+                "\twhen settlement_cost_unit_price>0 then settlement_cost_unit_price else storage_cost\n" +
+                "end settlement_cost,--结算成本\n" +
+                "storage_cost*tons_amount storage_amount --入库金额\n" +
+                "from (\n" +
+                "select \n" +
+                "d.*,\n" +
+                "n.years ,\n" +
+                "n.months ,\n" +
+                "n.end_period_cost,\n" +
+                "case \n" +
+                "\twhen storage_miscellaneous_unit_price>0 then storage_miscellaneous_unit_price else end_period_cost\n" +
+                "end storage_cost --入库成本\n" +
+                "from (\n" +
+                "select\n" +
+                "\tc.*,\n" +
+                "\tm.location_code ,\n" +
+                "\tm.amount amount_1,\n" +
+                "\tm.weighted_average_unit_price ,\n" +
+                "\tm.batch_amount ,\n" +
+                "\tcase \n" +
+                "\t\twhen c.storage_cost_unit_price>0 then storage_cost_unit_price else m.weighted_average_unit_price  \n" +
+                "\tend storage_miscellaneous_unit_price --本币入库及杂收成本单价\n" +
+                "from\n" +
+                "\t(\n" +
+                "\tselect\n" +
+                "\t\tb.*,\n" +
+                "\t\tp.purchase_order,storage_or_return_no,storage_cost_unit_price ,settlement_cost_unit_price\n" +
+                "\tfrom\n" +
+                "\t\t(\n" +
+                "\t\tselect\n" +
+                "\t\t\tcurrent_times,current_dt,sales_grade_code,stronghold,company,locations,location_docs,product_classify_code as classification,product_classify,subclass,material_no,\n" +
+                "\t\t\tproduct_category_name,specification,vendor,batch,tons_amount,amount,unit\n" +
+                "\t\tfrom\n" +
+                "\t\t\tdwd.dwd_batch_inventory_ingredient\n" +
+                " \t\twhere\n" +
+                " \t\t  amount >'0' and (product_classify_code in ('1101','2101','3101') or product_classify_code like '12%')\n" +
+                " \t\t  --and current_dt>=to_date('${check_point}','YYYY-MM-dd') and current_dt <to_date('${end_dt}','YYYY-MM-dd') --过滤原料、辅料\n" +
+                "\t\tgroup by current_times,current_dt,sales_grade_code,stronghold,company,locations,location_docs,product_classify_code,product_classify,subclass,material_no,product_category_name,\n" +
+                "\t\t\tspecification,vendor,batch,tons_amount,amount,unit) as b\n" +
+                "\tleft join dwd.dwd_purchase_storage_batch_price p on b.stronghold = p.stronghold and b.material_no = p.material_no and b.batch = p.batch) as c\n" +
+                "\tleft join dwd.dwd_auxiliary_material_batch_cost m on c.material_no = m.material_no  and c.batch = m.batch_no ) as d\n" +
+                "\tleft join dwd.dwd_material_monthly_form_detail n on d.material_no=n.material_no and d.stronghold=n.site  ) as f ) as e ;\n";
         MyHiveSqlParser myHiveSqlParser = new MyHiveSqlParser();
-        TableLineageModel tableLineageModel = myHiveSqlParser.parseSqlTableLineage(sql);
-        System.out.println(tableLineageModel.toString());
+        List<FieldLineageModel> fieldLineageModels = myHiveSqlParser.parseSqlFieldLineage(sql);
+        System.out.println(fieldLineageModels.toString());
     }
 }

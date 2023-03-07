@@ -27,20 +27,29 @@ public class HiveSqlTableLineageParser extends HiveSqlBaseVisitor {
                 .orElse(null);
         return super.visitInsert_stmt(ctx);
     }
-
     /**
      * 获取from真实表，加到来源表的Set里
      * @param ctx
      * @return
      */
+//    @Override
+//    public Object visitFrom_table_clause(HiveSqlParser.From_table_clauseContext ctx) {
+//        Optional.ofNullable(ctx)
+//                .map(HiveSqlParser.From_table_clauseContext::from_table_name_clause)
+//                .map(RuleContext::getText)
+//                .map(TableNameModel::parseTableName)
+//                .map(inputTables::add);
+//        return super.visitFrom_table_clause(ctx);
+//    }
+
     @Override
-    public Object visitFrom_table_clause(HiveSqlParser.From_table_clauseContext ctx) {
+    public Object visitFrom_table_name_clause(HiveSqlParser.From_table_name_clauseContext ctx){
         Optional.ofNullable(ctx)
-                .map(HiveSqlParser.From_table_clauseContext::from_table_name_clause)
+                .map(HiveSqlParser.From_table_name_clauseContext::table_name)
                 .map(RuleContext::getText)
                 .map(TableNameModel::parseTableName)
                 .map(inputTables::add);
-        return super.visitFrom_table_clause(ctx);
+        return super.visitFrom_table_name_clause(ctx);
     }
 
 
